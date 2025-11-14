@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LIFF Phone Scope 測試</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://static.line-scdn.net/liff/sdk/2.20.0/liff.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #00b900; }
+        pre { background-color: #eee; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; }
+        .status-box { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background-color: #e6ffe6; border: 1px solid #00b900; }
+        .error { background-color: #ffe6e6; border: 1px solid #ff4d4d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📞 LIFF 測試</h1>
+        <p>請確認此 LIFF App 已在 LINE Developer Console 中設定 **scope: phone**。</p>
+        <div id="liff-status" class="status-box">正在初始化 LIFF...</div>
+
+        <h2>結果：</h2>
+        <div id="results" class="status-box">等待資料取得...</div>
+
+        <h2>原始 ID Token 資料 (JSON):</h2>
+        <pre id="raw-data">無資料</pre>
+    </div>
+
+    <script>
+        // *** 請將 YOUR_LIFF_ID_HERE 替換為您的 LIFF ID ***
+        const LIFF_ID = "2007557804-VzprogWq"; 
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 顯示狀態的 DOM 元素
+            const statusElement = document.getElementById('liff-status');
+            const resultsElement = document.getElementById('results');
+            const rawDataElement = document.getElementById('raw-data');
+
+            liff.init({ liffId: LIFF_ID })
+                .then(() => {
+                    statusElement.textContent = 'LIFF 初始化成功。';
+                    statusElement.classList.add('success');
+                    handleLogin();
+                })
+                .catch((err) => {
+                    statusElement.textContent = `LIFF 初始化失敗：${err.code} ${err.message}`;
+                    statusElement.classList.add('error');
+                });
+            
+            function handleLogin() {
+                if (!liff.isLoggedIn()) {
+                    // 如果用戶未登入，執行登入。
+                    // redirectUri 會在授權後跳回目前的頁面。
+                    // 關鍵：在登入時要求 'phone' scope。
+                    liff.login({ 
+                        scope: 'profile openid phone', 
+                        redirectUri: window.location.href 
+                    });
+                } else {
+                    // 如果已登入，嘗試取得資料
+                    fetchData();
+                }
+            }
+
+            function fetchData() {
+                if (!liff.getIDToken()) {
+                    resultsElement.textContent = '無法取得 ID Token，請確保您是透過 LIFF 登入，並已在 LINE Developer Console 中啟用 ID Token。';
+                    resultsElement.classList.add('error');
+                    return;
+                }
+
+                try {
+                    // liff.getDecodedIDToken() 會將 JWT 解析為 JSON 物件
+                    const idTokenData = liff.getDecodedIDToken();
+
+                    // 將原始資料顯示在頁面上
+                    rawDataElement.textContent = JSON.stringify(idTokenData, null, 2);
+
+                    const userId = idTokenData.sub;
+                    const userPhone = idTokenData.phone;
+                    const userName = idTokenData.name || idTokenData.given_name;
+
+                    if (userPhone) {
+                        resultsElement.innerHTML = `
+                            <strong>✅ 恭喜！成功取得電話號碼！</strong><br>
+                            LINE User ID: ${userId}<br>
+                            用戶名稱: ${userName || 'N/A'}<br>
+                            <strong>電話號碼: ${userPhone}</strong>
+                        `;
+                        resultsElement.classList.add('success');
+                        resultsElement.classList.remove('error');
+                    } else {
+                        resultsElement.innerHTML = `
+                            <strong>⚠️ 未取得電話號碼</strong><br>
+                            LINE User ID: ${userId}<br>
+                            用戶名稱: ${userName || 'N/A'}<br>
+                            可能原因：<br>
+                            1. 您在授權畫面中**拒絕**提供電話號碼。<br>
+                            2. 您不是此官方帳號的**好友**。<br>
+                            3. 您之前已授權，但當時 LIFF **未設定** 'phone' scope (請清除授權紀錄後重試)。
+                        `;
+                        resultsElement.classList.add('error');
+                        resultsElement.classList.remove('success');
+                    }
+                } catch (error) {
+                    resultsElement.textContent = '解析 ID Token 時發生錯誤：' + error.message;
+                    resultsElement.classList.add('error');
+                    resultsElement.classList.remove('success');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
