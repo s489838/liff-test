@@ -18,40 +18,44 @@
 <body>
     <div class="container">
         <h1>📞 LIFF 測試</h1>
-        <h2>get OS</h2>
-        <button onclick="alert(liff.getOS())">顯示作業系統</button>
-        <h2>get isInClient</h2>
-        <button onclick="alert(liff.isInClient())">顯示是否在LINE內建瀏覽器</button>
-        <h2>close window</h2>
-        <button onclick="liff.closeWindow()">關閉視窗</button>
-
-        <h2>is LoggedIn</h2>
-        <button onclick="alert(liff.isLoggedIn())">顯示是否已登入</button>
-        <h2>liff logout</h2>
-        <button onclick="liff.logout(); alert('已登出');">登出</button>
-        <h2>liff login</h2>
-        <button onclick="liff.login()">登入</button>
-        <h2>get Profile</h2>
-        <button onclick="getProfile()">顯示個人資料</button>
+        <div id="info" class="status-box">正在載入資訊...</div>
     </div>
     <script>
         liff.init({ liffId: "2007557804-VzprogWq" })
         .then(() => {
             console.log("LIFF initialized");
+            displayInfo();
         })
         .catch((err) => {
             console.error("LIFF initialization failed", err);
+            document.getElementById('info').textContent = 'LIFF 初始化失敗: ' + err.message;
+            document.getElementById('info').classList.add('error');
         });
 
-        async function getProfile() {
+        async function displayInfo() {
             try {
-                const profile = await liff.getProfile();
-                alert(JSON.stringify(profile));
+                const os = liff.getOS();
+                const isInClient = liff.isInClient();
+                const isLoggedIn = liff.isLoggedIn();
+                let profile = '未登入';
+                if (isLoggedIn) {
+                    profile = await liff.getProfile();
+                    profile = JSON.stringify(profile, null, 2);
+                }
+                document.getElementById('info').innerHTML = `
+                    <strong>作業系統:</strong> ${os}<br>
+                    <strong>是否在 LINE 內建瀏覽器:</strong> ${isInClient}<br>
+                    <strong>是否已登入:</strong> ${isLoggedIn}<br>
+                    <strong>個人資料:</strong><br><pre>${profile}</pre>
+                `;
+                document.getElementById('info').classList.add('success');
             } catch (error) {
-                alert('Error getting profile: ' + error.message);
+                document.getElementById('info').textContent = '取得資訊時發生錯誤: ' + error.message;
+                document.getElementById('info').classList.add('error');
             }
         }
     </script>
 </body>
 
 </html>
+
