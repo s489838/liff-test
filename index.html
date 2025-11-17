@@ -46,14 +46,24 @@
                 const isInClient = liff.isInClient();
                 const isLoggedIn = liff.isLoggedIn();
                 let profile = '未登入';
+                let phoneNumber = '無';
+                
                 if (isLoggedIn) {
                     profile = await liff.getProfile();
                     profile = JSON.stringify(profile, null, 2);
+                    
+                    // 取得 ID Token 中的電話號碼
+                    const idToken = liff.getDecodedIDToken();
+                    if (idToken && idToken.phone_number) {
+                        phoneNumber = idToken.phone_number;
+                    }
                 }
+                
                 document.getElementById('info').innerHTML = `
                     <strong>作業系統:</strong> ${os}<br>
                     <strong>是否在 LINE 內建瀏覽器:</strong> ${isInClient}<br>
                     <strong>是否已登入:</strong> ${isLoggedIn}<br>
+                    <strong>電話號碼:</strong> ${phoneNumber}<br>
                     <strong>個人資料:</strong><br><pre>${profile}</pre>
                 `;
                 document.getElementById('info').classList.add('success');
