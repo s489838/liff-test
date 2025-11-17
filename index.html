@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>LIFF Phone Scope 測試</title>
+    <title>LIFF測試</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://static.line-scdn.net/liff/sdk/2.20.0/liff.js"></script>
+    <script charset="UTF-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -21,22 +21,24 @@
         <div id="info" class="status-box">正在載入資訊...</div>
     </div>
     <script>
-        // 確保 LIFF SDK 已載入
-        if (typeof liff === 'undefined') {
-            document.getElementById('info').textContent = 'LIFF SDK 未載入，請檢查網路連線或重新整理頁面。';
-            document.getElementById('info').classList.add('error');
-        } else {
-            liff.init({ liffId: "2007557804-VzprogWq" })
-            .then(() => {
-                console.log("LIFF initialized");
-                displayInfo();
-            })
-            .catch((err) => {
-                console.error("LIFF initialization failed", err);
-                document.getElementById('info').textContent = 'LIFF 初始化失敗: ' + err.message;
+        // 等待 LIFF SDK 載入
+        window.addEventListener('load', function() {
+            if (typeof liff === 'undefined') {
+                document.getElementById('info').textContent = 'LIFF SDK 未載入，請檢查網路連線或重新整理頁面。';
                 document.getElementById('info').classList.add('error');
-            });
-        }
+            } else {
+                liff.init({ liffId: "2007557804-VzprogWq" })
+                .then(() => {
+                    console.log("LIFF initialized");
+                    displayInfo();
+                })
+                .catch((err) => {
+                    console.error("LIFF initialization failed", err);
+                    document.getElementById('info').textContent = 'LIFF 初始化失敗: ' + err.message;
+                    document.getElementById('info').classList.add('error');
+                });
+            }
+        });
 
         async function displayInfo() {
             try {
@@ -62,7 +64,4 @@
         }
     </script>
 </body>
-
 </html>
-
-
